@@ -34,4 +34,5 @@ COPY --from=build /tmp/swagger/dist ./assets/swagger
 COPY --from=build /swagger.json ./assets/swagger/swagger.json
 COPY --from=build /TechChallengeApp TechChallengeApp
 
-ENTRYPOINT [ "./TechChallengeApp" ]
+CMD [ "./TechChallengeApp", "serve" ]
+
