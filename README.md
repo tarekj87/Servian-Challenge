@@ -16,11 +16,13 @@ In this solution I am going to dockerize the application and deploy it to AWS. I
 
 I am using github workflow defined in [pipeline file](.github/workflows/pipeline.yml) to build and push two docker containers to AWS ECR. the first docker container is defined by the [file](DockerfileSeed) which is going to seed the database. The second docker container is defined by the [file](Dockerfile) whch is going to run our application.
 
-## Aboud CloudFormation Templates:
+## About CloudFormation Templates:
 
   1. [First Stack](MyNetwork) is to provision the VPC, Subnets Route tables, Nat Gateway and all resources needed by netowrking for this solution.
   2. [Second Stack](MyRDS) is going to provison ECR repository, Multi AZ RDS with postgres engine and SSM prameters to save the username, password, db name (Because you can override the defaule value of parametes) and RDS endpoint ( Because AWS specify the RDS endpoint during the provisoning)
   3. [Thirds Stack](MyCluster) is going to create the ECS cluster with two task definitions , one service, application load balancer and all the resources needed for ECS and ALB. 
 
+## Issues I faced in this solution:
 
-  
+  1. The code couldn't override the value of variables defined in [toml file](conf.toml) when passing them as environment variables. So I couldn't configure ECS to get those value from SSM and inject them inside the container as environmnet values. To ovveride this issue, I am building the updated conf.toml file inside CICD workspace [pipeline](github/workflows/pipeline.yml)
+  2. 
