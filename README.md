@@ -20,7 +20,7 @@ The workflow also is provisioning  the resources defined in CloudFormation templ
 ## About CloudFormation Templates:
 
   1. [First Stack](MyNetwork.yaml) is to provision the VPC, Subnets, Route Tables, Nat Gateway and all the networking resources needed for this solution.
-  2. [Second Stack](MyRDS.yaml) is going to provison ECR repository, Multi AZ RDS with postgres engine and SSM prameters to save the username, password, db name (Because you can override the defaule value of parametes) and RDS endpoint ( Because AWS specify the RDS endpoint during the provisoning)
+  2. [Second Stack](MyDB.yaml) is going to provison ECR repository, Multi AZ RDS with postgres engine and SSM prameters to save the username, password, db name (Because you can override the defaule value of parametes) and RDS endpoint ( Because AWS specify the RDS endpoint during the provisoning)
   3. [Third Stack](MyCluster.yaml) is going to create the ECS cluster with two task definitions , one service, application load balancer and all the resources needed for ECS and ALB. 
 
 ## Issues I faced in this solution:
