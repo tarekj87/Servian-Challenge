@@ -12,7 +12,7 @@ In this solution I am going to dockerize the application and deploy it to AWS. I
   4. update github XXXXXXXX
 
 
-## CICD
+## CI/CD
 
 I am using github workflow defined in [pipeline file](.github/workflows/pipeline.yml) to build and push two docker containers to AWS ECR. the first docker container is defined by the [file](DockerfileSeed) which is going to seed the database. The second docker container is defined by the [file](Dockerfile) whch is going to run our application.
 
