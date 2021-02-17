@@ -1,0 +1,123 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Postgres RDS with Multi AZ & ECR Repository
+
+Parameters:
+  DbUser:
+    Type: String
+    Default: postgres
+    
+  DbPassword:
+    Type: String
+    Default: changeme
+
+  DbName:
+    Type: String
+    Default: app
+    
+Resources:
+#Define the Subnets Where the CloudFormation is going to Deploy The RDS
+  DatabaseSubnetGroup:
+    Type: 'AWS::RDS::DBSubnetGroup'
+    Properties:
+      DBSubnetGroupDescription: 'Subnet group for database instance'
+      SubnetIds:
+        -  !ImportValue MyNetwork-DBSubnetA
+        -  !ImportValue MyNetwork-DBSubnetB
+        -  !ImportValue MyNetwork-DBSubnetC
+ 
+#The Security Group to Determins Who Can Connect to RDS
+#In This Case ALL Resources loacted in Private Subnets Have Access to RDS
+  DBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow postgres connection to DB
+      VpcId:
+         !ImportValue MyNetwork-VPC
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 5432
+        ToPort: 5432
+        CidrIp: 10.1.70.0/24
+        
+      - IpProtocol: tcp
+        FromPort: 5432
+        ToPort: 5432
+        CidrIp: 10.1.80.0/24
+    
+      - IpProtocol: tcp
+        FromPort: 5432
+        ToPort: 5432
+        CidrIp: 10.1.90.0/24
+    
+          
+      SecurityGroupEgress:
+      - IpProtocol: tcp
+        FromPort: 0
+        ToPort: 65535
+        CidrIp: 0.0.0.0/0
+        
+  Database:
+    Type: 'AWS::RDS::DBInstance'
+    Properties:
+      DBInstanceIdentifier: "MyDB"
+      AllocatedStorage: 20
+      MultiAZ:  true
+      DBInstanceClass: "db.t2.micro"
+      Engine: "postgres"
+      #EngineVersion:
+      DBName:  !Ref DbName
+      MasterUsername: !Ref DbUser
+      MasterUserPassword: !Ref DbPassword
+      DBSubnetGroupName: !Ref DatabaseSubnetGroup
+      PubliclyAccessible: false
+      Port: 5432
+      VPCSecurityGroups:
+        - !GetAtt DBSecurityGroup.GroupId
+      BackupRetentionPeriod: 0
+
+      
+  MyRepository: 
+    Type: AWS::ECR::Repository
+    Properties: 
+      RepositoryName: "myrepo"
+
+#Store The DB User, Password, DB Name and Endpoint URL as Parameters in SSM to Use Later      
+  DbUserSSMParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: Save The DbUser in SSM Parameter
+      Name: "DbUser"
+      Type: String
+      Value: !Ref DbUser
+      
+  DbPasswordSSMParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: Save The DbPassword in SSM Parameter
+      Name: "DbPassword"
+      Type: String
+      Value: !Ref DbPassword
+      
+  DbNameSSMParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: Save The DbName in SSM Parameter
+      Name: "DbName"
+      Type: String
+      Value: !Ref DbName
+      
+  DbHostSSMParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: Save The DbHos in SSM Parameter
+      Name: "DbHost"
+      Type: String
+      Value: !GetAtt Database.Endpoint.Address
+      
+Outputs:
+  DBEndpoint:
+    Description: Generated endpoint address for database connection
+    Value: !GetAtt Database.Endpoint.Address
+    Export:
+      Name: !Sub ${AWS::StackName}-DBEndpoint
+      
