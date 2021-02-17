@@ -13,5 +13,5 @@ In this solution I am going to dockerize the application and deploy it to AWS. I
 
 ## CICD
 
-I am using github workflow defined in [pipeline.yml] ( .github/workflows/pipeline.yml)
+I am using github workflow defined in [pipeline file](.github/workflows/pipeline.yml)
   
