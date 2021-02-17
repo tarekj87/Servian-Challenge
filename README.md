@@ -24,5 +24,8 @@ I am using github workflow defined in [pipeline file](.github/workflows/pipeline
 
 ## Issues I faced in this solution:
 
-  1. The code couldn't override the value of variables defined in [toml file](conf.toml) when passing them as environment variables. So I couldn't configure ECS to get those value from SSM and inject them inside the container as environmnet values. To ovveride this issue, I am building the updated conf.toml file inside CICD workspace [pipeline](github/workflows/pipeline.yml)
-  2. 
+  1. The code couldn't override the value of variables defined in [toml file](conf.toml) when passing them as environment variables. So I couldn't configure ECS to get those value from SSM and inject them inside the container as environmnet values. To override this issue, I am building the conf.toml file inside CICD workspace [pipeline](github/workflows/pipeline.yml)
+  2. Cloudformation does not support running a task only once (to seed the db), and only support a Service to run that task which means the Service will keep seeding the db forever. I didn't solve this issue (Seeding the db in this solution) but to do this conider the following solution:
+      
+      1. Seeding the db inside CICD (I think CircleCI has module to run one-off task isnide ECS)
+      2. You can use AWS Lambda Docker (a new feature in lambda) to the docker instance thats going to seed the db. But that required provisoning the Labda function inside the VPC ( to get access to RDS) and you need a way to invoke the lamda function (API Gateway for example)
