@@ -28,5 +28,18 @@ The workflow also is provisioning  the resources defined in CloudFormation templ
   1. The code couldn't override the value of variables defined in [toml file](conf.toml) when passing them as environment variables. So I couldn't configure ECS to get those values from SSM and inject them inside the container as environmnet variables. To override this issue, I am building the conf.toml file inside CICD workspace [pipeline](.github/workflows/pipeline.yml)
   2. Cloudformation does not support running a task only once (to seed the db), and only support a Service to run that task which means the Service will keep seeding the db forever. I didn't solve this issue (Seeding the db in this solution) but to do this conider the following solutions:
       
-      1. Seeding the db inside CICD (I think CircleCI has module to run one-off task isnide ECS)
+      1. Give your CICD an access to RDS and run the container for seeding the db (I think CircleCI has module to run one-off task isnide ECS)
       2. You can use AWS Lambda Docker (a new feature in lambda) to run a docker instance that will seed the db. But thatrequired provisoning the Lambda function inside the VPC ( to get access to RDS) and you need a way to invoke the lambda function (API Gateway for example)
+
+
+## I would do but I didn't:
+
+In a real scenario I would do the following:
+
+  1. Encrypt the parameters stored in SSM using KMS.
+  2. Since the assets are static files, I would host them in S3 bucket with CloudFront for caching to reduce the traffic to the app.
+  3. Register a domain name in Route53 and add an alias for Application Load Balancer, so the name be friendly.
+  4. SSL certifcate and offload it to ALB and redirect the HTTP traffic to HTTPS.
+  5. AWS WAF as firewall for ALB
+  
+  6.  
