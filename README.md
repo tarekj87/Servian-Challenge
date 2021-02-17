@@ -25,7 +25,7 @@ The workflow also is provisioning  the resources defined in CloudFormation templ
 
 ## Issues I faced in this solution:
 
-  1. The code couldn't override the value of variables defined in [toml file](conf.toml) when passing them as environment variables. So I couldn't configure ECS to get those values from SSM and inject them inside the container as environmnet variables. To override this issue, I am building the conf.toml file inside CICD workspace [pipeline](github/workflows/pipeline.yml)
+  1. The code couldn't override the value of variables defined in [toml file](conf.toml) when passing them as environment variables. So I couldn't configure ECS to get those values from SSM and inject them inside the container as environmnet variables. To override this issue, I am building the conf.toml file inside CICD workspace [pipeline](.github/workflows/pipeline.yml)
   2. Cloudformation does not support running a task only once (to seed the db), and only support a Service to run that task which means the Service will keep seeding the db forever. I didn't solve this issue (Seeding the db in this solution) but to do this conider the following solutions:
       
       1. Seeding the db inside CICD (I think CircleCI has module to run one-off task isnide ECS)
