@@ -9,4 +9,9 @@ In this solution I am going to dockerize the application and deploy it to AWS. I
   1. AWS Account
   2. AWS IAM User with needed IAM plicies to provistion all the infrastructes, resources and IAM roles defined in the CloudForamtion Template.
   3. Access Key and Secret Access Key for that user.
+
+
+## CICD
+
+I am using github workflow defined in [pipeline.yml] ( .github/workflows/pipeline.yml)
   
