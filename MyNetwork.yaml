@@ -1,0 +1,258 @@
+Resources:
+# Create VPC
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.1.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+      - Key: Name
+        Value:  !Join ['', [!Ref "AWS::StackName", "-VPC" ]]
+        
+# Create InternetGateway & Attach it to VPC      
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    DependsOn: VPC
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+# Create Subnets Inside The Define VPC
+  DBSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.1.10.0/24
+      AvailabilityZone: !Select [ 0, !GetAZs ]    # Get the first AZ in the list       
+      Tags:
+      - Key: Name
+        Value: !Sub ${AWS::StackName}-DBSubnet-A
+        
+  DBSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.1.20.0/24
+      AvailabilityZone: !Select [ 1, !GetAZs ]    # Get the Second AZ in the list       
+      Tags:
+      - Key: Name
+        Value: !Sub ${AWS::StackName}-DBSubnet-B
+        
+  DBSubnetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.1.30.0/24
+      AvailabilityZone: !Select [ 2, !GetAZs ]    # Get the Thrid AZ in the list       
+      Tags:
+      - Key: Name
+        Value: !Sub ${AWS::StackName}-DBSubnet-C
+        
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.1.40.0/24
+      AvailabilityZone: !Select [ 0, !GetAZs ]    # Get the First AZ in the list       
+      Tags:
+      - Key: Name
+        Value: !Sub ${AWS::StackName}-PublicSubnet-A
+        
+  PublicSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.1.50.0/24
+      AvailabilityZone: !Select [ 1, !GetAZs ]    # Get the Second AZ in the list       
+      Tags:
+      - Key: Name
+        Value: !Sub ${AWS::StackName}-PublicSubnet-B
+        
+  PublicSubnetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.1.60.0/24
+      AvailabilityZone: !Select [ 2, !GetAZs ]    # Get the Third AZ in the list       
+      Tags:
+      - Key: Name
+        Value: !Sub ${AWS::StackName}-PublicSubnet-C
+        
+  PrivateSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.1.70.0/24
+      AvailabilityZone: !Select [ 0, !GetAZs ]    # Get the First AZ in the list       
+      Tags:
+      - Key: Name
+        Value: !Sub ${AWS::StackName}-PrivateSubnet-A
+        
+  PrivateSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.1.80.0/24
+      AvailabilityZone: !Select [ 1, !GetAZs ]    # Get the Second AZ in the list       
+      Tags:
+      - Key: Name
+        Value: !Sub ${AWS::StackName}-PrivateSubnet-B
+
+  PrivateSubnetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.1.90.0/24
+      AvailabilityZone: !Select [ 2, !GetAZs ]    # Get the Third AZ in the list       
+      Tags:
+      - Key: Name
+        Value: !Sub ${AWS::StackName}-PrivateSubnet-C
+        
+# Some Route Tables For our Subnets
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+      - Key: Name
+        Value: Public
+  PublicRoute1:   # Public route table has direct routing to IGW:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway 
+      
+      
+# Here is a Private route table
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+      - Key: Name
+        Value: Private
+  PrivateRoute1:            # Private route table can access web via NAT (created below)
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      # Route traffic through the NAT Gateway:
+      NatGatewayId: !Ref NATGateway
+      
+# A NAT Gateway
+
+  NATGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt ElasticIPAddress.AllocationId
+      SubnetId: !Ref PublicSubnetA
+      Tags:
+      - Key: Name
+        Value: !Sub NAT-${AWS::StackName}
+  ElasticIPAddress:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: VPC
+     
+# Attach the public subnets to public route tables,
+# and attach the private subnets to private route tables   
+  PublicSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetA
+      RouteTableId: !Ref PublicRouteTable
+  PublicSubnetBRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetB
+      RouteTableId: !Ref PublicRouteTable
+  PublicSubnetCRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetC
+      RouteTableId: !Ref PublicRouteTable
+  PrivateSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnetA
+      RouteTableId: !Ref PrivateRouteTable
+  PrivateSubnetBRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnetB
+      RouteTableId: !Ref PrivateRouteTable
+  PrivateSubnetCRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnetC
+      RouteTableId: !Ref PrivateRouteTable
+
+#Export Some Values to Reuse in Other Stacks
+Outputs:
+ VPC:
+   Description: VPC of the base network
+   Value: !Ref VPC
+   Export:
+     Name: !Sub ${AWS::StackName}-VPC
+     
+ DBSubnetA:
+   Description: First DB Subnet
+   Value: !Ref DBSubnetA
+   Export:
+     Name: !Sub ${AWS::StackName}-DBSubnetA
+
+ DBSubnetB:
+   Description: Second DB Subnet
+   Value: !Ref DBSubnetB
+   Export:
+     Name: !Sub ${AWS::StackName}-DBSubnetB
+     
+ DBSubnetC:
+   Description: Third DB Subnet
+   Value: !Ref DBSubnetC
+   Export:
+     Name: !Sub ${AWS::StackName}-DBSubnetC
+     
+ PrivateSubnetA:
+   Description: First Private Subnet
+   Value: !Ref PrivateSubnetA
+   Export:
+     Name: !Sub ${AWS::StackName}-PrivateSubnetA
+     
+ PrivateSubnetB:
+   Description: Second Private Subnet
+   Value: !Ref PrivateSubnetB
+   Export:
+     Name: !Sub ${AWS::StackName}-PrivateSubnetB
+     
+ PrivateSubnetC:
+   Description: Third Private Subnet
+   Value: !Ref PrivateSubnetC
+   Export:
+     Name: !Sub ${AWS::StackName}-PrivateSubnetC
+     
+ PublicSubnetA:
+   Description: First Public Subnet
+   Value: !Ref PublicSubnetA
+   Export:
+     Name: !Sub ${AWS::StackName}-PublicSubnetA
+     
+ PublicSubnetB:
+   Description: Second Public Subnet
+   Value: !Ref PublicSubnetB
+   Export:
+     Name: !Sub ${AWS::StackName}-PublicSubnetB
+     
+ PublicSubnetC:
+   Description: Third Public Subnet
+   Value: !Ref PublicSubnetC
+   Export:
+     Name: !Sub ${AWS::StackName}-PublicSubnetC
+
