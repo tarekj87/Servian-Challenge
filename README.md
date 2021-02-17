@@ -41,5 +41,3 @@ In a real scenario I would do the following:
   3. Register a domain name in Route53 and add an alias for Application Load Balancer, so the name be friendly.
   4. SSL certifcate and offload it to ALB and redirect the HTTP traffic to HTTPS.
   5. AWS WAF as firewall for ALB
-  
-  6.  
